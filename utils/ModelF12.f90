@@ -6,6 +6,7 @@ PROGRAM ReadMO
     Logical, parameter :: tFindTerms=.true.         !Debugging option to write out same spin and opposite spin contributions from ALL terms.
     logical, parameter :: tWriteInts=.true.         !Logging option to write out integrals
     logical, parameter :: tReadRDMs=.true. 
+    logical, parameter :: tformattedints=.true.     !Whether to read from formatted, human-readable files, or not.
 
     INTEGER :: HFOccOrbs    !This is the number of occupied HF orbitals
     INTEGER :: nOrbBasis    !No orbitals in orbital basis
@@ -203,7 +204,11 @@ PROGRAM ReadMO
         !Obtain fg_rs^xy
 !        write(6,*) "Getting fg_rs^xy tensor from MO_FG file..."
         unit_fg=get_free_unit()
-        open(unit_fg,file='MO_FG',status='old',form='unformatted',access='sequential',action='read')
+        if(tformattedints) then
+            open(unit_fg,file='FGDUMP',status='old',form='formatted')
+        else
+            open(unit_fg,file='MO_FG',status='old',form='unformatted',access='sequential',action='read')
+        endif
 
         !Fill with spatial orbital integrals 
         allocate(fgints(1:nOrbBasis,1:nOrbBasis,1:nOrbBasis,1:nOrbBasis),stat=ierr)
@@ -253,7 +258,11 @@ PROGRAM ReadMO
         !However, we later want r_tu^xy, so get all indices in that slot
 !        write(6,*) "Getting r_ua'^xy tensor from MO_F12 file..."
         unit_f12=get_free_unit()
-        open(unit_f12,file='MO_F12',status='old',form='unformatted',access='sequential',action='read')
+        if(tformattedints) then
+            open(unit_f12,file='F12DUMP',status='old',form='formatted')
+        else
+            open(unit_f12,file='MO_F12',status='old',form='unformatted',access='sequential',action='read')
+        endif
 
         allocate(fints(1:norbstot,1:norbstot,1:norbbasis,1:norbbasis),stat=ierr)
         if(ierr.ne.0) stop 'error allocating'
@@ -321,7 +330,11 @@ PROGRAM ReadMO
 
 !        write(6,*) "Getting g_rs^ta' tensor from MO_G file..."
         unit_g=get_free_unit()
-        open(unit_g,file='MO_G',status='old',form='unformatted',access='sequential',action='read')
+        if(tformattedints) then
+            open(unit_g,file='FCIDUMP',status='old',form='formatted')
+        else
+            open(unit_g,file='MO_G',status='old',form='unformatted',access='sequential',action='read')
+        endif
 
         allocate(gints(1:nOrbsTot,1:nOrbsTot,1:nOrbsTot,1:nOrbBasis),stat=ierr)
         if(ierr.ne.0) stop 'error allocating'
@@ -900,7 +913,11 @@ PROGRAM ReadMO
 
         if(.not.tReadRDMs) then
             unit_fock=get_free_unit()
-            open(unit_fock,file='MO_F',status='old',form='unformatted',access='sequential',action='read')
+            if(tformattedints) then
+                open(unit_fock,file='MO_F',status='old',form='formatted')
+            else
+                open(unit_fock,file='MO_F',status='old',form='unformatted',access='sequential',action='read')
+            endif
 
             !Fill the fg array (in physical notation). All indices just over orbital basis
             write(6,*) "Reading fock matrix from disk."
@@ -908,7 +925,11 @@ PROGRAM ReadMO
             !Now we need the exchange matrix only
             !Now get the k matrix
             unit_k=get_free_unit()
-            open(unit_k,file='MO_K',status='old',form='unformatted',access='sequential',action='read')
+            if(tformattedints) then
+                open(unit_k,file='MO_K',status='old',form='formatted')
+            else
+                open(unit_k,file='MO_K',status='old',form='unformatted',access='sequential',action='read')
+            endif
 
             !Fill with spin orbital integrals 
             allocate(mo_k(1:nOrbsTot*2,1:nOrbsTot*2),stat=ierr)
@@ -1666,7 +1687,11 @@ PROGRAM ReadMO
             !First, read these integrals in. They are only needed once, so deallocate after.
 !            write(6,*) "Getting FTF_vw^xy tensor from MO_FTF file..."
             unit_ftf=get_free_unit()
-            open(unit_ftf,file='MO_FTF',status='old',form='unformatted',access='sequential',action='read')
+            if(tformattedints) then
+                open(unit_ftf,file='FTFDUMP',status='old',form='formatted')
+            else
+                open(unit_ftf,file='MO_FTF',status='old',form='unformatted',access='sequential',action='read')
+            endif
 
             !Fill with spatial orbital integrals 
             allocate(ftfints(1:nOrbBasis,1:nOrbBasis,1:nOrbBasis,1:nOrbBasis),stat=ierr)
@@ -1749,7 +1774,7 @@ PROGRAM ReadMO
             endif
             write(6,*) "Summed in TERM 8"
 
-            if(.not.tReadRDMs) then
+            if((.not.tReadRDMs).and.(.not.tformattedints)) then
 
                 !Fill with spin orbital integrals 
                 allocate(fpk(1:nOrbsTot*2,1:nOrbsTot*2),stat=ierr)
@@ -1775,7 +1800,11 @@ PROGRAM ReadMO
             !the geminal functions, we need to put in the cusp conditions to both of them.
 !            write(6,*) "Getting rr_vw^xy tensor from MO_FG file (both geminal functions)..."
             unit_ff=get_free_unit()
-            open(unit_ff,file='MO_FF',status='old',form='unformatted',access='sequential',action='read')
+            if(tformattedints) then
+                open(unit_ff,file='FFDUMP',status='old',form='formatted')
+            else
+                open(unit_ff,file='MO_FF',status='old',form='unformatted',access='sequential',action='read')
+            endif
 
             !Fill with spatial orbital integrals 
             allocate(ffints(1:nOrbsTot,1:nOrbBasis,1:nOrbBasis,1:nOrbBasis),stat=ierr)
@@ -2170,7 +2199,11 @@ PROGRAM ReadMO
             !the geminal functions, we need to put in the cusp conditions to both of them.
             write(6,*) "Getting rr_vw^xy tensor from MO_FG file (both geminal functions)..."
             unit_ff=get_free_unit()
-            open(unit_ff,file='MO_FF',status='old',form='unformatted',access='sequential',action='read')
+            if(tformattedints) then
+                open(unit_ff,file='FFDUMP',status='old',form='formatted')
+            else
+                open(unit_ff,file='MO_FF',status='old',form='unformatted',access='sequential',action='read')
+            endif
 
             !Fill with spatial orbital integrals 
             allocate(ffints(1:nOrbsTot,1:nOrbBasis,1:nOrbBasis,1:nOrbBasis),stat=ierr)
@@ -2982,7 +3015,7 @@ PROGRAM ReadMO
         integer(2) , allocatable :: Indices(:,:)
         real(8) , allocatable :: Buf(:)
         real(8) :: xout(2)
-        integer :: iBuffer,ii,jj,i!,j
+        integer :: iBuffer,ii,jj,i,ierr
 
         if(TwoIndLims(2).lt.TwoIndLims(1)) stop 'Error with 1 electron integral limits'
         call FindMax2Indices(fu,MaxFilei,MaxFilej)
@@ -2994,7 +3027,12 @@ PROGRAM ReadMO
 
         arr=0.D0
         rewind(fu)
-        read(fu) maxlength,xout(2)
+        if(.not.tformattedints) then
+            read(fu) maxlength,xout(2)
+        else
+            maxlength = 1
+            length = 1
+        endif
         allocate(Indices(2,MaxLength),Buf(MaxLength))
         iBuffer=0
         do while(.true.)
@@ -3002,8 +3040,17 @@ PROGRAM ReadMO
             iBuffer=iBuffer+1
 !            WRITE(6,*) "Reading buffer: ",iBuffer
 
-            read(fu,err=12) length,Indices(1:2,1:length),Buf(1:length)
-            IF(length.le.0) goto 13
+            if(tformattedints) then
+                read(fu,*,iostat=ierr) Buf(1),Indices(1,1),Indices(2,1)
+                if(ierr.lt.0) then
+                    goto 13
+                elseif(ierr.gt.0) then
+                    goto 12
+                endif
+            else
+                read(fu,err=12) length,Indices(1:2,1:length),Buf(1:length)
+                IF(length.le.0) goto 13
+            endif
 !            WRITE(6,"(I12,A)") length," integrals read. Writing Integrals..."
 
             do i=1,length
@@ -3122,7 +3169,7 @@ PROGRAM ReadMO
         integer(8) :: MaxLength,length
         integer(2) , allocatable :: Indices(:,:)
         real(8) , allocatable :: Buf(:)
-        integer :: iBuffer,i,j,k,l,ii,jj,kk,ll,Mini,Minj,Mink,Minl,Maxi,Maxj,Maxk,Maxl
+        integer :: iBuffer,i,j,k,l,ii,jj,kk,ll,Mini,Minj,Mink,Minl,Maxi,Maxj,Maxk,Maxl,ierr
         integer(2) :: MaxFilei,MaxFilej,MaxFilek,MaxFilel
         
         CALL FindMaxIndices(fu,MaxFilei,MaxFilej,MaxFilek,MaxFilel)
@@ -3142,7 +3189,13 @@ PROGRAM ReadMO
         arr=0.D0
 
         rewind(fu)
-        read(fu) maxlength
+
+        if(.not.tformattedints) then
+            read(fu) maxlength
+        else
+            maxlength = 1
+            length = maxlength
+        endif
 !        write(6,*) "maxlength = ",maxlength
         allocate(Indices(4,MaxLength),Buf(MaxLength))
 
@@ -3152,8 +3205,20 @@ PROGRAM ReadMO
             iBuffer=iBuffer+1
 !            WRITE(6,*) "Reading buffer: ",iBuffer
 
-            read(fu,err=12) length,Indices(1:4,1:length),Buf(1:length)
-            IF(length.le.0) goto 13
+            if(tformattedints) then
+                read(fu,*,iostat=ierr) Buf(1),Indices(1:4,1)
+                if(ierr.lt.0) then
+                    goto 13 !eof
+                elseif(ierr.gt.0) then
+                    goto 12
+                endif
+                if((Indices(1,1).eq.0).or.(Indices(2,1).eq.0).or.(Indices(3,1).eq.0).or.(Indices(4,1).eq.0)) then
+                    cycle   !We only want to pick up 4 index integrals
+                endif
+            else
+                read(fu,err=12) length,Indices(1:4,1:length),Buf(1:length)
+                IF(length.le.0) goto 13
+            endif
 !            WRITE(6,"(I12,A)") length," integrals read. Writing Integrals..."
 
             do i=1,length
@@ -3366,7 +3431,11 @@ PROGRAM ReadMO
 
 !        write(6,*) "Getting g_rs^xy tensor from MO_G file..."
         unit_g=get_free_unit()
-        open(unit_g,file='MO_G',status='old',form='unformatted',access='sequential',action='read')
+        if(tformattedints) then
+            open(unit_g,file='FCIDUMP',status='old',form='formatted')
+        else
+            open(unit_g,file='MO_G',status='old',form='unformatted',access='sequential',action='read')
+        endif
         
         allocate(gints(1:nOrbBasis,1:nOrbBasis,1:nOrbBasis,1:nOrbBasis),stat=ierr)
         if(ierr.ne.0) stop 'error allocating'
@@ -3430,7 +3499,11 @@ PROGRAM ReadMO
 
 !        write(6,*) "Getting g_rs^xy tensor from MO_G file..."
         unit_g=get_free_unit()
-        open(unit_g,file='MO_G',status='old',form='unformatted',access='sequential',action='read')
+        if(tformattedints) then
+            open(unit_g,file='FCIDUMP',status='old',form='formatted')
+        else
+            open(unit_g,file='MO_G',status='old',form='unformatted',access='sequential',action='read')
+        endif
         
         if(allocated(gints)) deallocate(gints)
         allocate(gints(1:nOrbBasis,1:nOrbBasis,1:nOrbBasis,1:nOrbBasis),stat=ierr)
@@ -3554,7 +3627,11 @@ PROGRAM ReadMO
 
 !        write(6,*) "Getting g_rs^xy tensor from MO_G file..."
         unit_g=get_free_unit()
-        open(unit_g,file='MO_G',status='old',form='unformatted',access='sequential',action='read')
+        if(tformattedints) then
+            open(unit_g,file='FCIDUMP',status='old',form='formatted')
+        else
+            open(unit_g,file='MO_G',status='old',form='unformatted',access='sequential',action='read')
+        endif
         
         allocate(gints(1:nOrbBasis,1:nOrbBasis,1:nOrbBasis,1:nOrbBasis),stat=ierr)
         if(ierr.ne.0) stop 'error allocating'
@@ -3617,6 +3694,8 @@ PROGRAM ReadMO
         INTEGER :: i,iBuffer,nBuffers
         INTEGER(8) :: Length,MaxLength
         INTEGER(2) :: Maxi,Maxj,Maxk,Maxl
+
+        return  !Ignore this subroutine
 
         OPEN(8,FILE='MO_G',STATUS='old',FORM='UNFORMATTED',access='sequential')
         rewind(8)
@@ -3719,29 +3798,42 @@ PROGRAM ReadMO
         INTEGER , INTENT(IN) :: iUnit
         INTEGER(8) :: MaxLength,Length
         INTEGER(2) , ALLOCATABLE :: Indices(:,:)
-        INTEGER :: i,iBuf
-        REAL(8) :: xout(2)
+        INTEGER :: i,iBuf,j,ierr
+        REAL(8) :: xout(2),integral
 
         rewind(iUnit)
-        read(iUnit) MaxLength,xout(2)
-        ALLOCATE(Indices(2,MaxLength))
         Maxi=0
         Maxj=0
-        iBuf=0
-        do while(.true.)
-            iBuf=iBuf+1
-!            WRITE(6,*) "Attempting to read buffer: ",iBuf
-            read(iUnit,err=11) length,Indices(1:2,1:length)
-            IF(length.gt.0) THEN
-                do i=1,length
-                    IF(Indices(1,i).gt.Maxi) Maxi=Indices(1,i)
-                    IF(Indices(2,i).gt.Maxj) Maxj=Indices(2,i)
-                enddo
-            ELSE
-                EXIT
-            ENDIF
-        enddo
-        DEALLOCATE(Indices)
+        if(tformattedints) then
+            do while(.true.)
+                read(iunit,*,iostat=ierr) integral,i,j
+                if(ierr.lt.0) then
+                    exit
+                elseif(ierr.gt.0) then
+                    goto 11
+                endif
+                if(i.gt.Maxi) Maxi = i
+                if(j.gt.Maxj) Maxj = j
+            enddo
+        else
+            read(iUnit) MaxLength,xout(2)
+            ALLOCATE(Indices(2,MaxLength))
+            iBuf=0
+            do while(.true.)
+                iBuf=iBuf+1
+    !            WRITE(6,*) "Attempting to read buffer: ",iBuf
+                read(iUnit,err=11) length,Indices(1:2,1:length)
+                IF(length.gt.0) THEN
+                    do i=1,length
+                        IF(Indices(1,i).gt.Maxi) Maxi=Indices(1,i)
+                        IF(Indices(2,i).gt.Maxj) Maxj=Indices(2,i)
+                    enddo
+                ELSE
+                    EXIT
+                ENDIF
+            enddo
+            DEALLOCATE(Indices)
+        endif
         REWIND(iUnit)
         RETURN
 11      STOP 'Error when finding largest indices'
@@ -3754,32 +3846,48 @@ PROGRAM ReadMO
         INTEGER , INTENT(IN) :: iUnit
         INTEGER(8) :: MaxLength,Length
         INTEGER(2) , ALLOCATABLE :: Indices(:,:)
-        INTEGER :: i,iBuf
+        INTEGER :: i,iBuf,j,k,l,ierr
+        real(8) :: Integral
 
         rewind(iUnit)
-        read(iUnit) MaxLength
-        ALLOCATE(Indices(4,MaxLength))
         Maxi=0
         Maxj=0
         Maxk=0
         Maxl=0
-        iBuf=0
-        do while(.true.)
-            iBuf=iBuf+1
-!            WRITE(6,*) "Attempting to read buffer: ",iBuf
-            read(iUnit,err=11) length,Indices(1:4,1:length)
-            IF(length.gt.0) THEN
-                do i=1,length
-                    IF(Indices(1,i).gt.Maxi) Maxi=Indices(1,i)
-                    IF(Indices(2,i).gt.Maxk) Maxk=Indices(2,i)
-                    IF(Indices(3,i).gt.Maxj) Maxj=Indices(3,i)
-                    IF(Indices(4,i).gt.Maxl) Maxl=Indices(4,i)
-                enddo
-            ELSE
-                EXIT
-            ENDIF
-        enddo
-        DEALLOCATE(Indices)
+        if(tformattedints) then
+            do while(.true.)
+                read(iUnit,*,iostat=ierr) integral,i,k,j,l
+                if(ierr.lt.0) then
+                    exit    !eof
+                elseif(ierr.gt.0) then
+                    goto 11
+                endif
+                if(i.gt.Maxi) Maxi = i
+                if(j.gt.Maxj) Maxj = j
+                if(k.gt.Maxk) Maxk = k
+                if(l.gt.Maxl) Maxl = l
+            enddo
+        else
+            read(iUnit) MaxLength
+            ALLOCATE(Indices(4,MaxLength))
+            iBuf=0
+            do while(.true.)
+                iBuf=iBuf+1
+    !            WRITE(6,*) "Attempting to read buffer: ",iBuf
+                read(iUnit,err=11) length,Indices(1:4,1:length)
+                IF(length.gt.0) THEN
+                    do i=1,length
+                        IF(Indices(1,i).gt.Maxi) Maxi=Indices(1,i)
+                        IF(Indices(2,i).gt.Maxk) Maxk=Indices(2,i)
+                        IF(Indices(3,i).gt.Maxj) Maxj=Indices(3,i)
+                        IF(Indices(4,i).gt.Maxl) Maxl=Indices(4,i)
+                    enddo
+                ELSE
+                    EXIT
+                ENDIF
+            enddo
+            DEALLOCATE(Indices)
+        endif
         REWIND(iUnit)
         RETURN
 11      STOP 'Error when finding largest indices'
@@ -3882,7 +3990,11 @@ PROGRAM ReadMO
         
         write(6,*) "Testing 1-geminal pair spin-orb integral permutational symmetry..."
         unit_fg=get_free_unit()
-        open(unit_fg,file='MO_FG',status='old',form='unformatted',access='sequential',action='read')
+        if(tformattedints) then
+            open(unit_fg,file='FGDUMP',status='old',form='formatted')
+        else
+            open(unit_fg,file='MO_FG',status='old',form='unformatted',access='sequential',action='read')
+        endif
         !Fill with spatial orbital integrals 
         allocate(fgints(1:nOrbBasis,1:nOrbBasis,1:nOrbBasis,1:nOrbBasis),stat=ierr)
         if(ierr.ne.0) stop 'error allocating'
@@ -3975,7 +4087,11 @@ PROGRAM ReadMO
 
         write(6,*) "Now testing 2-geminal geminal permutational symmetry..."
         unit_ff=get_free_unit()
-        open(unit_ff,file='MO_FF',status='old',form='unformatted',access='sequential',action='read')
+        if(tformattedints) then
+            open(unit_ff,file='FFDUMP',status='old',form='formatted')
+        else
+            open(unit_ff,file='MO_FF',status='old',form='unformatted',access='sequential',action='read')
+        endif
 
         !Fill with spatial orbital integrals 
         allocate(ffints(1:nOrbsTot,1:nOrbBasis,1:nOrbBasis,1:nOrbBasis),stat=ierr)
@@ -4549,7 +4665,11 @@ PROGRAM ReadMO
         mo_k(:,:)=0.D0
 
         unit_g=get_free_unit()
-        open(unit_g,file='MO_G',status='old',form='unformatted',access='sequential',action='read')
+        if(tformattedints) then
+            open(unit_g,file='FCIDUMP',status='old',form='formatted')
+        else
+            open(unit_g,file='MO_G',status='old',form='unformatted',access='sequential',action='read')
+        endif
 
         allocate(gints(1:nOrbsTot,1:nOrbsTot,1:nOrbsTot,1:nOrbBasis),stat=ierr)
         if(ierr.ne.0) stop 'error allocating'
@@ -4617,7 +4737,11 @@ PROGRAM ReadMO
 
         !Temporarily store the real fock matrix 
         unit_fock=get_free_unit()
-        open(unit_fock,file='MO_F',status='old',form='unformatted',access='sequential',action='read')
+        if(tformattedints) then
+            open(unit_fock,file='MO_F',status='old',form='formatted')
+        else
+            open(unit_fock,file='MO_F',status='old',form='unformatted',access='sequential',action='read')
+        endif
 
         write(6,"(A)") "Reading fock matrix from disk to calculate one-electron hamiltonian matrix elements..."
         call fill2indarr_spin(unit_fock,fock,TwoIndLims)
